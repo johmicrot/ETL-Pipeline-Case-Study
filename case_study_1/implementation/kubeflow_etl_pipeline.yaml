@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: etl-model-pipeline-
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.0, pipelines.kubeflow.org/pipeline_compilation_time: '2023-09-24T20:43:54.902500',
+    pipelines.kubeflow.org/pipeline_spec: '{"description": "ETL Pipeline for TalpaSolutions",
+      "name": "ETL_model_pipeline"}'}
+  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.0}
+spec:
+  entrypoint: etl-model-pipeline
+  templates:
+  - name: etl-model-pipeline
+    dag:
+      tasks:
+      - name: inference
+        template: inference
+        dependencies: [train-model]
+      - {name: new-file-trigger, template: new-file-trigger}
+      - name: preprocessor
+        template: preprocessor
+        dependencies: [new-file-trigger]
+      - name: train-model
+        template: train-model
+        dependencies: [preprocessor]
+  - name: inference
+    container: {image: 'inference:1.0'}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.0
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+  - name: new-file-trigger
+    container: {image: 'new_file_trigger:1.0'}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.0
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+  - name: preprocessor
+    container: {image: 'preprocessor:1.0'}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.0
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+  - name: train-model
+    container: {image: 'train_model:1.0'}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.0
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+  arguments:
+    parameters: []
+  serviceAccountName: pipeline-runner

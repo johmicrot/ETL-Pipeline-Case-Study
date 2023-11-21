@@ -1,0 +1,61 @@
+
+-- assets
+CREATE TABLE assets (
+    asset_id SERIAL PRIMARY KEY,
+    UUID UUID NOT NULL UNIQUE,
+    asset_type VARCHAR(255) NOT NULL,
+    last_processed_timestamp TIMESTAMP
+);
+
+-- raw_data_batches
+CREATE TABLE raw_data_batches (
+    batch_id SERIAL PRIMARY KEY,
+    asset_id INT REFERENCES assets(asset_id),
+    s3_location TEXT NOT NULL,
+    first_timestamp TIMESTAMP NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    received_time TIMESTAMP NOT NULL,
+    was_processed BOOLEAN DEFAULT FALSE NOT NULL
+);
+
+-- preprocessed files
+CREATE TABLE state_vectors (
+    vector_id SERIAL PRIMARY KEY,
+    batch_id INT REFERENCES raw_data_batches(batch_id),
+    asset_id INT REFERENCES assets(asset_id),
+    s3_location TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    processed_time TIMESTAMP NOT NULL
+);
+
+-- models
+CREATE TABLE models (
+    model_id SERIAL PRIMARY KEY,
+    model_name VARCHAR(255),
+    full_model_name VARCHAR(255),  
+    version INT NOT NULL DEFAULT 1,
+    s3_location TEXT NOT NULL,
+    trained_date TIMESTAMP NOT NULL,
+    UNIQUE(model_name, version) -- Unique constraint on combination of pipeline_name and version
+);
+
+
+-- post_processed_results
+CREATE TABLE post_processed_results (
+    result_id SERIAL PRIMARY KEY,
+    inference_id INT REFERENCES inferences(inference_id),
+    s3_location TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    processed_date TIMESTAMP NOT NULL
+);
+
+
+
+-- pipeline_configurations, additional table which can be helpful for tracking
+CREATE TABLE pipeline_configurations (
+    config_id SERIAL PRIMARY KEY,
+    asset_id INT REFERENCES assets(asset_id),
+    start_date DATE NOT NULL,
+    model_parameters TEXT NOT NULL,
+    last_updated TIMESTAMP NOT NULL
+);

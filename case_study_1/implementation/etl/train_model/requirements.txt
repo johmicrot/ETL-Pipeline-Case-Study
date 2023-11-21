@@ -1,0 +1,5 @@
+boto3==1.28.49
+pandas==2.0.3
+psycopg2==2.9.7 
+kafka==2.0.2
+scikit-learn==1.3.0
